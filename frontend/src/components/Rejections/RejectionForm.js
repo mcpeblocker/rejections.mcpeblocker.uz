@@ -7,6 +7,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { rejectionAPI } from '../../utils/api';
+import BackButton from '../Layout/BackButton';
+import Footer from '../Layout/Footer';
 import './RejectionForm.css';
 
 function RejectionForm({ user }) {
@@ -78,6 +80,7 @@ function RejectionForm({ user }) {
 
   return (
     <div className="rejection-form-container">
+      <BackButton />
       {/* Header */}
       <header className="header">
         <div className="header-content">
@@ -233,6 +236,7 @@ function RejectionForm({ user }) {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

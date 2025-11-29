@@ -5,8 +5,9 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255),
+    google_id VARCHAR(255) UNIQUE,
     avatar_level INTEGER DEFAULT 1,
     avatar_image VARCHAR(255) DEFAULT 'avatar-1.png',
     rejection_count INTEGER DEFAULT 0,

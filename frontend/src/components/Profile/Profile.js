@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { userAPI } from '../../utils/api';
 import Avatar from '../Avatar/Avatar';
+import BackButton from '../Layout/BackButton';
+import Footer from '../Layout/Footer';
 import './Profile.css';
 
 function Profile({ user, onLogout }) {
@@ -51,6 +53,7 @@ function Profile({ user, onLogout }) {
 
   return (
     <div className="profile-container">
+      <BackButton />
       {/* Header */}
       <header className="header">
         <div className="header-content">
@@ -218,6 +221,7 @@ function Profile({ user, onLogout }) {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

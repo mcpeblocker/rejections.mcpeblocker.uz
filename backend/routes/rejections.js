@@ -67,9 +67,13 @@ router.post('/', authMiddleware, [
   body('rejectionDate').isISO8601().withMessage('Valid date is required')
 ], async (req, res) => {
   try {
+    // Log incoming request body for debugging
+    console.log('📥 Received rejection data:', JSON.stringify(req.body, null, 2));
+    
     // Validate input
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', JSON.stringify(errors.array(), null, 2));
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -135,6 +139,52 @@ router.post('/', authMiddleware, [
   } catch (error) {
     console.error('Create rejection error:', error);
     res.status(500).json({ error: 'Failed to create rejection' });
+  }
+});
+
+/**
+ * GET /api/rejections/recent/global
+ * Get recently added rejections across all users (public, no auth required)
+ */
+router.get('/recent/global', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    
+    const result = await db.query(`
+      SELECT 
+        r.id, 
+        r.title, 
+        r.rejection_type, 
+        r.rejection_date, 
+        r.source,
+        r.created_at,
+        u.username,
+        u.avatar_image,
+        u.avatar_level
+      FROM rejections r
+      JOIN users u ON r.user_id = u.id
+      ORDER BY r.created_at DESC
+      LIMIT $1
+    `, [limit]);
+
+    res.json({
+      rejections: result.rows.map(r => ({
+        id: r.id,
+        title: r.title,
+        rejectionType: r.rejection_type,
+        rejectionDate: r.rejection_date,
+        source: r.source,
+        createdAt: r.created_at,
+        user: {
+          username: r.username,
+          avatarImage: r.avatar_image,
+          avatarLevel: r.avatar_level
+        }
+      }))
+    });
+  } catch (error) {
+    console.error('Get global recent rejections error:', error);
+    res.status(500).json({ error: 'Failed to fetch recent rejections' });
   }
 });
 

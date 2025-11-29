@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { analyticsAPI, userAPI } from '../../utils/api';
+import BackButton from '../Layout/BackButton';
+import Footer from '../Layout/Footer';
 import './Analytics.css';
 
 function Analytics({ user }) {
@@ -48,6 +50,7 @@ function Analytics({ user }) {
 
   return (
     <div className="analytics-container">
+      <BackButton />
       {/* Header */}
       <header className="header">
         <div className="header-content">
@@ -256,6 +259,7 @@ function Analytics({ user }) {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

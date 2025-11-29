@@ -8,13 +8,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 
 // Import components
+import Landing from './components/Landing/Landing';
 import Login from './components/Auth/Login';
 import Signup from './components/Auth/Signup';
+import GoogleCallback from './components/Auth/GoogleCallback';
 import Dashboard from './components/Dashboard/Dashboard';
 import RejectionForm from './components/Rejections/RejectionForm';
 import WallOfRejections from './components/Rejections/WallOfRejections';
 import Analytics from './components/Analytics/Analytics';
 import Profile from './components/Profile/Profile';
+import UserSearch from './components/Profile/UserSearch';
+import PublicProfile from './components/Profile/PublicProfile';
+import Leaderboard from './components/Leaderboard/Leaderboard';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,6 +71,10 @@ function App() {
             } 
           />
           <Route 
+            path="/auth/google/callback" 
+            element={<GoogleCallback onLogin={handleLogin} />} 
+          />
+          <Route 
             path="/dashboard" 
             element={
               isAuthenticated ? 
@@ -106,8 +115,24 @@ function App() {
             } 
           />
           <Route 
+            path="/search" 
+            element={
+              isAuthenticated ? 
+              <UserSearch /> : 
+              <Navigate to="/login" />
+            } 
+          />
+          <Route 
+            path="/profile/:username" 
+            element={<PublicProfile />} 
+          />
+          <Route 
+            path="/leaderboard" 
+            element={<Leaderboard />} 
+          />
+          <Route 
             path="/" 
-            element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
+            element={isAuthenticated ? <Navigate to="/dashboard" /> : <Landing />} 
           />
         </Routes>
       </div>

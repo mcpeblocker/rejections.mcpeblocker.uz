@@ -125,6 +125,32 @@
   animation-delay: 0.4s;
 }
 
+/* Divider for OAuth separator */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 25px 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  position: relative;
+  background: white;
+  padding: 0 15px;
+  color: #999;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 @media (max-width: 500px) {
   .auth-card {
     padding: 30px 20px;

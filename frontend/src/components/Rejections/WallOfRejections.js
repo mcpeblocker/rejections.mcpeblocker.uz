@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { rejectionAPI } from '../../utils/api';
+import BackButton from '../Layout/BackButton';
+import Footer from '../Layout/Footer';
 import './WallOfRejections.css';
 
 function WallOfRejections({ user }) {
@@ -66,6 +68,7 @@ function WallOfRejections({ user }) {
 
   return (
     <div className="wall-container">
+      <BackButton />
       {/* Header */}
       <header className="header">
         <div className="header-content">
@@ -260,6 +263,7 @@ function WallOfRejections({ user }) {
           </motion.div>
         )}
       </AnimatePresence>
+      <Footer />
     </div>
   );
 }

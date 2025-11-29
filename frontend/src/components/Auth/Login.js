@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
+import GoogleButton from './GoogleButton';
 import './Auth.css';
 
 function Login({ onLogin }) {
@@ -27,6 +28,10 @@ function Login({ onLogin }) {
         setError(data.error);
       } else {
         onLogin(data.token, data.user);
+        
+        // Sync local rejections if any exist
+        await syncLocalRejections(data.token);
+        
         navigate('/dashboard');
       }
     } catch (err) {
@@ -34,6 +39,34 @@ function Login({ onLogin }) {
       console.error('Login error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Sync local rejections after login
+  const syncLocalRejections = async (token) => {
+    const localRejections = JSON.parse(localStorage.getItem('localRejections') || '[]');
+    
+    if (localRejections.length === 0) return;
+    
+    try {
+      const { rejectionAPI } = await import('../../utils/api');
+      
+      for (const rejection of localRejections) {
+        await rejectionAPI.create({
+          title: rejection.title,
+          rejection_type: rejection.rejection_type,
+          rejection_date: rejection.rejection_date,
+          notes: rejection.notes || '',
+          source: 'pre-login'
+        });
+      }
+      
+      // Clear local rejections after successful sync
+      localStorage.removeItem('localRejections');
+      console.log(`Synced ${localRejections.length} local rejections to account`);
+    } catch (err) {
+      console.error('Failed to sync local rejections:', err);
+      // Don't fail login if sync fails
     }
   };
 
@@ -52,6 +85,12 @@ function Login({ onLogin }) {
         )}
 
         <form onSubmit={handleSubmit} className="auth-form">
+          <GoogleButton text="Sign in with Google" />
+          
+          <div className="divider">
+            <span>or</span>
+          </div>
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input

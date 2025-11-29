@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../utils/api';
+import GoogleButton from './GoogleButton';
 import './Auth.css';
 
 function Signup({ onLogin }) {
@@ -44,6 +45,10 @@ function Signup({ onLogin }) {
         setError(data.errors.map(e => e.msg).join(', '));
       } else {
         onLogin(data.token, data.user);
+        
+        // Sync local rejections to account
+        await syncLocalRejections(data.token);
+        
         navigate('/dashboard');
       }
     } catch (err) {
@@ -51,6 +56,34 @@ function Signup({ onLogin }) {
       console.error('Signup error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Sync local rejections after signup
+  const syncLocalRejections = async (token) => {
+    const localRejections = JSON.parse(localStorage.getItem('localRejections') || '[]');
+    
+    if (localRejections.length === 0) return;
+    
+    try {
+      const { rejectionAPI } = await import('../../utils/api');
+      
+      for (const rejection of localRejections) {
+        await rejectionAPI.create({
+          title: rejection.title,
+          rejection_type: rejection.rejection_type,
+          rejection_date: rejection.rejection_date,
+          notes: rejection.notes || '',
+          source: 'pre-signup'
+        });
+      }
+      
+      // Clear local rejections after successful sync
+      localStorage.removeItem('localRejections');
+      console.log(`Synced ${localRejections.length} local rejections to account`);
+    } catch (err) {
+      console.error('Failed to sync local rejections:', err);
+      // Don't fail signup if sync fails
     }
   };
 
@@ -69,6 +102,12 @@ function Signup({ onLogin }) {
         )}
 
         <form onSubmit={handleSubmit} className="auth-form">
+          <GoogleButton text="Sign up with Google" />
+          
+          <div className="divider">
+            <span>or</span>
+          </div>
+
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input

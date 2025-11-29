@@ -7,6 +7,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
+const passport = require('passport');
 const db = require('../config/database');
 
 const router = express.Router();
@@ -139,5 +140,60 @@ router.post('/login', [
     res.status(500).json({ error: 'Failed to login' });
   }
 });
+
+/**
+ * GET /api/auth/google
+ * Initiate Google OAuth flow
+ */
+router.get('/google', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.status(503).json({ 
+      error: 'Google OAuth is not configured on this server',
+      message: 'Please contact the administrator to set up Google sign-in'
+    });
+  }
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false 
+  })(req, res, next);
+});
+
+/**
+ * GET /api/auth/google/callback
+ * Google OAuth callback
+ */
+router.get('/google/callback', (req, res, next) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.redirect('/login?error=google_oauth_not_configured');
+  }
+  passport.authenticate('google', { 
+    session: false,
+    failureRedirect: '/login?error=google_auth_failed'
+  })(req, res, next);
+}, (req, res) => {
+    try {
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: req.user.id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Redirect to frontend with token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/auth/google/callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+        id: req.user.id,
+        username: req.user.username,
+        email: req.user.email,
+        avatarLevel: req.user.avatar_level,
+        avatarImage: req.user.avatar_image,
+        rejectionCount: req.user.rejection_count
+      }))}`);
+    } catch (error) {
+      console.error('Google callback error:', error);
+      res.redirect('/login?error=callback_failed');
+    }
+  }
+);
 
 module.exports = router;
