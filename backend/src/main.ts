@@ -1,8 +1,14 @@
 import express from "express";
 import { configDotenv } from "dotenv";
 import cors from "cors";
+import morgan from "morgan";
+import authMiddleware from "./middlewares/auth.js";
+import { prisma } from "./prisma.js";
+import type { RequestWithUser } from "./types/RequestWithUser.js";
 
-if (process.env.NODE_ENV !== "production") {
+const IS_PROD = process.env.NODE_ENV === "production";
+
+if (!IS_PROD) {
     configDotenv({
         path: "../.env",
     });
@@ -10,24 +16,42 @@ if (process.env.NODE_ENV !== "production") {
 
 const app = express();
 
+app.use(morgan(IS_PROD ? "combined" : "dev"));
 app.use(cors());
 app.use(express.json());
-
-app.use((req,res, next) => {
-    // Log each request
-    console.log(`${req.method} ${req.path}`);
-    next();
-});
 
 app.get("/api/health", (req, res) => {
     res.send({ status: "OK" });
 });
 
-app.post("/api/rejection/log", (req, res) => {
-    const { id, email } = req.body;
-    console.log(`Rejection logged for ID: ${id}, Email: ${email}`);
+app.post("/api/rejections/log", authMiddleware, async (req: RequestWithUser, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const { emailId, subject, content, sender, timestamp, reason } = req.body;
+    // Basic validation
+    if (!emailId || !reason || !subject) {
+        return res.status(400).send({ error: "Missing required fields: emailId, reason, subject" });
+    }
+    
+    // Default timestamp to now if not provided
+    const rejectionTimestamp = timestamp ? new Date(timestamp) : new Date();
+
+    const newRejection = await prisma.rejection.create({
+        data: {
+            userId: userId,
+            emailId,
+            title: subject,
+            content,
+            sender,
+            timestamp: rejectionTimestamp,
+            reason,
+        }
+    })
     // Logic to log rejection would go here
-    res.status(201).send({ message: "Rejection logged successfully" });
+    res.status(201).send({ message: "Rejection logged successfully", rejectionId: newRejection.id });
 });
 
 app.use((req, res) => {
