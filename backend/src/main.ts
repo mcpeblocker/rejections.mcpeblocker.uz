@@ -24,6 +24,46 @@ app.get("/api/health", (req, res) => {
     res.send({ status: "OK" });
 });
 
+app.get("/api/rejections/", authMiddleware, async (req: RequestWithUser, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const rejections = await prisma.rejection.findMany({
+        where: {
+            userId: userId,
+        },
+    });
+
+    res.send(rejections);
+});
+
+app.get("/api/rejections/check", authMiddleware, async (req: RequestWithUser, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const { emailId } = req.query;
+    if (!emailId || typeof emailId !== "string") {
+        return res.status(400).send({ error: "Missing or invalid emailId query parameter" });
+    }
+
+    const rejection = await prisma.rejection.findFirst({
+        where: {
+            userId: userId,
+            emailId: emailId,
+        },
+    });
+
+    if (rejection) {
+        return res.send({ exists: true });
+    } else {
+        return res.send({ exists: false });
+    }
+});
+
 app.post("/api/rejections/log", authMiddleware, async (req: RequestWithUser, res) => {
     const userId = req.userId;
     if (!userId) {
@@ -35,7 +75,7 @@ app.post("/api/rejections/log", authMiddleware, async (req: RequestWithUser, res
     if (!emailId || !reason || !subject) {
         return res.status(400).send({ error: "Missing required fields: emailId, reason, subject" });
     }
-    
+
     // Default timestamp to now if not provided
     const rejectionTimestamp = timestamp ? new Date(timestamp) : new Date();
 

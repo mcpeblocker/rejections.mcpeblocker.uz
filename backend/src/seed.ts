@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import { configDotenv } from 'dotenv';
 import process from 'node:process';
+
+configDotenv({
+    path: "../.env",
+});
 
 const prisma = new PrismaClient();
 
