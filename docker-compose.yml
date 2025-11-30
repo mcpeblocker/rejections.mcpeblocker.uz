@@ -31,7 +31,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+      - "${SERVER_PORT}:5000"
     restart: unless-stopped
 
 volumes:
