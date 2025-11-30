@@ -15,8 +15,8 @@ app.use((req,res, next) => {
     next();
 });
 
-app.get("/api/", (req, res) => {
-    res.send("Hello, World!");
+app.get("/api/health", (req, res) => {
+    res.send({ status: "OK" });
 });
 
 app.post("/api/rejection/log", (req, res) => {
