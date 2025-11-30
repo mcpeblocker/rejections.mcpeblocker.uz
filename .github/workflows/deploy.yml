@@ -29,14 +29,16 @@ jobs:
             sleep 15
             
             # Health check
-            if curl -f http://localhost:80/api/health > /dev/null 2>&1; then
-              echo "Deployment successful!"
+            if curl -f http://localhost:88/api/health > /dev/null 2>&1; then
+              echo -e "\e[32m==> Health check passed! Deployment successful.\e[0m"
               docker-compose logs --tail=50
             else
-              echo "Health check failed! Rolling back..."
+              # Print in red color
+              echo -e "\e[31m==> Health check failed! Rolling back...\e[0m"
               git reset --hard HEAD~1
               docker-compose down
               docker-compose up -d --build
+              echo -e "\e[34m==> Rollback completed.\e[0m"
               exit 1
             fi
             docker-compose logs --tail=50
