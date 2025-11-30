@@ -1,9 +1,13 @@
-FROM node:lts-alpine
+FROM node:lts-slim
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm ci
+
+RUN npm ci --only=production
 
 # Copy everything except files listed in .dockerignore
 COPY . .
