@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy everything except files listed in .dockerignore
 COPY . .
