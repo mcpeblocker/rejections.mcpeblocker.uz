@@ -15,7 +15,7 @@ app.use((req,res, next) => {
     next();
 });
 
-app.get("/", (req, res) => {
+app.get("/api/", (req, res) => {
     res.send("Hello, World!");
 });
 
@@ -30,7 +30,7 @@ app.use((req, res) => {
     res.status(404).send({ error: "Not Found" });
 });
 
-const PORT = process.env.SERVER_PORT;
+const PORT = process.env.SERVER_PORT || 8000;
 
 if (!PORT) {
     throw new Error("SERVER_PORT is not defined in environment variables");

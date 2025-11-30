@@ -5,13 +5,10 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm ci
 
+# Copy everything except files listed in .dockerignore
 COPY . .
 RUN npm run build
 
-# Hardcode environment variables for production
-ENV NODE_ENV=production
-ENV PORT=5000
-
 EXPOSE 5000
 
-CMD ["npm","start"]
+CMD ["npm", "start"]
