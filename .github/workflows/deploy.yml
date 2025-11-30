@@ -25,9 +25,6 @@ jobs:
             
             # Apply migrations
             docker-compose run --rm backend npx prisma migrate deploy
-
-            # Apply seed data
-            docker-compose run --rm backend npm run seed
             
             docker-compose down
             docker-compose up -d --build
