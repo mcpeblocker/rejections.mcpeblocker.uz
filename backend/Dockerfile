@@ -7,6 +7,11 @@ RUN npm ci
 
 # Copy everything except files listed in .dockerignore
 COPY . .
+
+# Generate Prisma client
+RUN npm run prisma generate
+
+# Build the application
 RUN npm run build
 
 EXPOSE 5000
