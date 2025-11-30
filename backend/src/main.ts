@@ -39,6 +39,21 @@ app.get("/api/rejections/", authMiddleware, async (req: RequestWithUser, res) =>
     res.send(rejections);
 });
 
+app.get("/api/rejections/count", authMiddleware, async (req: RequestWithUser, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const count = await prisma.rejection.count({
+        where: {
+            userId: userId,
+        },
+    });
+
+    res.send({ count });
+});
+
 app.get("/api/rejections/check", authMiddleware, async (req: RequestWithUser, res) => {
     const userId = req.userId;
     if (!userId) {
