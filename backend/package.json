@@ -9,7 +9,7 @@
     "dev": "nodemon src/main.ts",
     "build": "tsc",
     "prisma": "prisma",
-    "seed": "ts-node src/seed.ts"
+    "seed": "npm run build && node ./dist/seed.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
