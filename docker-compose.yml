@@ -39,6 +39,8 @@ services:
     container_name: rejection-nginx
     env_file:
       - .env
+    environment:
+      - NGINX_DOMAIN=${NGINX_DOMAIN}
     networks:
       - default
     ports:
