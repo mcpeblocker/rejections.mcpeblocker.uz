@@ -22,20 +22,22 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin master
+            
+            # Apply migrations
+            docker-compose run --rm backend npx prisma migrate deploy
+            
             docker-compose down
             docker-compose up -d --build
-
-            # Wait for services to start
+            
             sleep 15
             
-            # Health check
             if curl -f http://localhost:88/api/health > /dev/null 2>&1; then
               echo -e "\e[32m==> Health check passed! Deployment successful.\e[0m"
-              docker-compose logs --tail=50
             else
               # Print in red color
               echo -e "\e[31m==> Health check failed! Rolling back...\e[0m"
               git reset --hard HEAD~1
+              docker-compose run --rm backend npx prisma migrate deploy
               docker-compose down
               docker-compose up -d --build
               echo -e "\e[34m==> Rollback completed.\e[0m"

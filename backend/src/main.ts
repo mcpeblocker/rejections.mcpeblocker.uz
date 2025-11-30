@@ -1,8 +1,12 @@
 import express from "express";
-import { config as configEnv } from "dotenv";
+import { configDotenv } from "dotenv";
 import cors from "cors";
 
-configEnv();
+if (process.env.NODE_ENV !== "production") {
+    configDotenv({
+        path: "../.env",
+    });
+}
 
 const app = express();
 
