@@ -25,6 +25,14 @@ router.post("/register", async (req, res) => {
         return res.status(400).json({ message: "Email and password are required." });
     }
 
+    // Check if already has PendingUser in the database
+    const existingPendingUser = await prisma.pendingUser.findUnique({
+        where: { email }
+    });
+    if (existingPendingUser) {
+        return res.status(200).json({ success: true, message: "A verification email has already been sent to this email address. Please check your inbox." });
+    }
+
     // Generate verification token
     const verificationToken = JWTService.generateToken({ email } as VerificationTokenPayload, TOKEN_EXPIRY_TIME);
 

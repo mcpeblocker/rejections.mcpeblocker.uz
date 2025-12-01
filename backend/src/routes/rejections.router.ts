@@ -106,4 +106,39 @@ router.post("/log-from-email", authMiddleware, async (req: RequestWithUser, res)
     res.status(201).send({ message: "Rejection logged successfully", rejectionId: newRejection.id });
 });
 
+router.post("/log-from-website", authMiddleware, async (req: RequestWithUser, res) => {
+    const userId = req.userId;
+    if (!userId) {
+        return res.status(401).send({ error: "Unauthorized" });
+    }
+
+    const { title, category, description, reflections } = req.body;
+    // Basic validation
+    if (!title || !category) {
+        return res.status(400).send({ error: "Missing required fields: title, category" });
+    }
+
+    let content = `Category: ${category}\n\n`;
+    if (description) {
+        content += `Description: ${description}\n\n`;
+    }
+    if (reflections) {
+        content += `Reflections: ${reflections}\n\n`;
+    }
+    // Default timestamp to now
+    const timestamp = new Date();
+
+    const newRejection = await prisma.rejection.create({
+        data: {
+            userId: userId,
+            title,
+            content,
+
+            timestamp,
+        }
+    })
+    // Logic to log rejection would go here
+    res.status(201).send({ message: "Rejection logged successfully", rejectionId: newRejection.id });
+});
+
 export default router;
