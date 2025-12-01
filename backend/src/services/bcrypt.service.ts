@@ -1,0 +1,23 @@
+import bcrypt from "bcryptjs";
+
+export class BcryptService {
+    /**
+     * Hashes a plain text password.
+     * @param password - The plain text password to hash.
+     * @returns The hashed password.
+     */
+    static async hashPassword(password: string): Promise<string> {
+        const salt = await bcrypt.genSalt(10);
+        return bcrypt.hash(password, salt);
+    }
+
+    /**
+     * Compares a plain text password with a hashed password.
+     * @param password - The plain text password.
+     * @param hashedPassword - The hashed password.
+     * @returns True if the passwords match, false otherwise.
+     */
+    static async comparePassword(password: string, hashedPassword: string): Promise<boolean> {
+        return bcrypt.compare(password, hashedPassword);
+    }
+}

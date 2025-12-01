@@ -1,17 +1,18 @@
 import { PrismaClient } from '@prisma/client';
 import process from 'node:process';
+import appConfig from './config.js';
 
 const prisma = new PrismaClient();
 
 async function main() {
     const user = await prisma.user.upsert({
-        where: { email: 'user@example.com' },
+        where: { email: 'system@rejections.mcpeblocker.uz' },
         update: {},
         create: {
-            name: 'One and only user',
-            username: 'uniqueusername',
-            email: 'user@example.com',
-            password: 'securepassword',
+            name: 'System Account',
+            username: 'system',
+            email: 'system@rejections.mcpeblocker.uz',
+            password: appConfig.SYSTEM_ACCOUNT_PASSWORD,
         },
     });
     console.log(user);
