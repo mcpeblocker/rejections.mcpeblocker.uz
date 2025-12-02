@@ -72,7 +72,7 @@ router.get("/profile/:username", async (req, res) => {
             id: r.id,
             title: r.title,
             source: r.emailId ? 'email' : 'manual',
-            date: r.timestamp || r.createdAt,
+            timestamp: r.timestamp || r.createdAt,
         }));
 
         // Calculate streak (days with at least one rejection in last 30 days)
