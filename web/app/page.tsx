@@ -308,7 +308,9 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
       const signupResponse = await apiService.register(email, password);
       if (signupResponse.success) {
         // Successfully signed up
-        toast.success("We are creating your account. Check your email for verification link!");
+        toast.success("📧 Check your email! We've sent you a verification link to complete your registration.", {
+          duration: 6000,
+        });
         onClose();
         setLoading(false);
         return;
@@ -355,7 +357,8 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
             </div>
             <span className="block text-center text-xs sm:text-sm mt-2 mb-4 text-gray-500 px-2">
               Do not have an account? We got your back! <br />
-              Just press the "Enter" button to create one automatically.
+              Just press the "Enter" button to create one automatically. <br />
+              <span className="text-orange-400 text-[11px] sm:text-xs mt-1 inline-block">💡 Check your spam folder if you don't see the verification email</span>
             </span>
             <Button type="primary" htmlType="submit" className="w-full" loading={loading} size="large">
               Enter

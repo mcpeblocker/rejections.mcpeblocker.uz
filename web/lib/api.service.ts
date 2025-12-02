@@ -146,6 +146,42 @@ class APIService {
     return this.handleResponse<MeResponse>(response);
   }
 
+  /**
+   * Update user profile (name and username)
+   */
+  async updateProfile(name: string, username: string): Promise<MeResponse> {
+    const response = await fetch(`${this.baseURL}/auth/profile`, {
+      method: "PATCH",
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ name, username }),
+    });
+    return this.handleResponse<MeResponse>(response);
+  }
+
+  /**
+   * Change user password
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${this.baseURL}/auth/change-password`, {
+      method: "POST",
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    return this.handleResponse<{ success: boolean; message: string }>(response);
+  }
+
+  /**
+   * Delete user account
+   */
+  async deleteAccount(password: string): Promise<{ success: boolean; message: string }> {
+    const response = await fetch(`${this.baseURL}/auth/account`, {
+      method: "DELETE",
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ password }),
+    });
+    return this.handleResponse<{ success: boolean; message: string }>(response);
+  }
+
   // ==================== REJECTIONS ENDPOINTS ====================
 
   /**
@@ -277,6 +313,30 @@ class APIService {
 
     // Clear local storage after syncing
     localStorage.removeItem("rejection_experiences");
+  }
+
+  // ==================== PUBLIC ENDPOINTS ====================
+
+  /**
+   * Get public profile by username (no auth required)
+   */
+  async getPublicProfile(username: string): Promise<any> {
+    const response = await fetch(`${this.baseURL}/public/profile/${username}`, {
+      method: "GET",
+      headers: this.getHeaders(false),
+    });
+    return this.handleResponse<any>(response);
+  }
+
+  /**
+   * Get public rejection by ID (no auth required)
+   */
+  async getPublicRejection(id: string): Promise<any> {
+    const response = await fetch(`${this.baseURL}/public/rejection/${id}`, {
+      method: "GET",
+      headers: this.getHeaders(false),
+    });
+    return this.handleResponse<any>(response);
   }
 }
 

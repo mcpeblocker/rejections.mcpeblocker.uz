@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { Modal, Input } from "antd";
 import { apiService, UserProfile } from "@/lib/api.service";
 import DashboardLayout from "@/components/DashboardLayout";
 
@@ -8,34 +9,63 @@ export default function ProfilePage() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [editedName, setEditedName] = useState("");
     const [editedUsername, setEditedUsername] = useState("");
+    
+    // Password change modal state
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    
+    // Delete account modal state
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deletePassword, setDeletePassword] = useState("");
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+    const fetchUser = async () => {
+        try {
+            const response = await apiService.getMe();
+            if (response.success && response.user) {
+                setUser(response.user);
+                setEditedName(response.user.name);
+                setEditedUsername(response.user.username || "");
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const response = await apiService.getMe();
-                if (response.success && response.user) {
-                    setUser(response.user);
-                    setEditedName(response.user.name);
-                    setEditedUsername(response.user.username || "");
-                }
-            } catch (error) {
-                console.error("Error fetching user:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchUser();
     }, []);
 
-    const handleSaveProfile = () => {
-        // Backend doesn't have an update endpoint yet
-        toast("Coming up soon... Profile update feature will be available in the next update!", {
-            icon: "ℹ️",
-        });
-        setIsEditing(false);
+    const handleSaveProfile = async () => {
+        if (!editedName.trim()) {
+            toast.error("Name cannot be empty!");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const response = await apiService.updateProfile(editedName.trim(), editedUsername.trim());
+            if (response.success && response.user) {
+                setUser(response.user);
+                setEditedName(response.user.name);
+                setEditedUsername(response.user.username || "");
+                toast.success("Profile updated successfully!");
+                setIsEditing(false);
+            }
+        } catch (error: any) {
+            console.error("Error updating profile:", error);
+            toast.error(error.message || "Failed to update profile. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -44,6 +74,64 @@ export default function ProfilePage() {
             setEditedUsername(user.username || "");
         }
         setIsEditing(false);
+    };
+
+    const handlePasswordChange = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast.error("All password fields are required!");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error("New passwords do not match!");
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            toast.error("Password must be at least 6 characters long!");
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            const response = await apiService.changePassword(currentPassword, newPassword);
+            if (response.success) {
+                toast.success("Password changed successfully!");
+                setIsPasswordModalOpen(false);
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+            }
+        } catch (error: any) {
+            console.error("Error changing password:", error);
+            toast.error(error.message || "Failed to change password. Please check your current password.");
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) {
+            toast.error("Password is required to delete account!");
+            return;
+        }
+
+        setIsDeletingAccount(true);
+        try {
+            const response = await apiService.deleteAccount(deletePassword);
+            if (response.success) {
+                toast.success("Account deleted successfully. Redirecting...");
+                apiService.clearAuthToken();
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 2000);
+            }
+        } catch (error: any) {
+            console.error("Error deleting account:", error);
+            toast.error(error.message || "Failed to delete account. Please check your password.");
+        } finally {
+            setIsDeletingAccount(false);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -86,7 +174,7 @@ export default function ProfilePage() {
                 <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-lg overflow-hidden mb-6">
                     {/* Avatar section */}
                     <div className="bg-gradient-to-r from-slate-700/50 to-slate-800/50 p-6 sm:p-8 border-b border-slate-700">
-                        <div className="flex items-center gap-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-3xl sm:text-4xl">
                                 {user.name.charAt(0).toUpperCase()}
                             </div>
@@ -97,7 +185,29 @@ export default function ProfilePage() {
                                     <p className="text-slate-500 text-sm mt-1">@{user.username}</p>
                                 )}
                             </div>
+                            {user.username && (
+                                <button
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/profile/${user.username}`;
+                                        navigator.clipboard.writeText(url);
+                                        toast.success("Profile link copied! Share it with others 🎉");
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                    Share Profile
+                                </button>
+                            )}
                         </div>
+                        {!user.username && (
+                            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                                <p className="text-yellow-400 text-sm">
+                                    💡 Set a username to share your public profile with others!
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Profile info */}
@@ -168,13 +278,15 @@ export default function ProfilePage() {
                                 <div className="flex gap-3 pt-4">
                                     <button
                                         onClick={handleSaveProfile}
-                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                        disabled={isSaving}
+                                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                                     >
-                                        Save Changes
+                                        {isSaving ? "Saving..." : "Save Changes"}
                                     </button>
                                     <button
                                         onClick={handleCancelEdit}
-                                        className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                                        disabled={isSaving}
+                                        className="px-6 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -210,9 +322,7 @@ export default function ProfilePage() {
                     
                     <div className="space-y-4">
                         <button
-                            onClick={() => toast("Coming up soon... Password change feature will be available in the next update!", {
-                                icon: "ℹ️",
-                            })}
+                            onClick={() => setIsPasswordModalOpen(true)}
                             className="w-full sm:w-auto px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm"
                         >
                             🔒 Change Password
@@ -221,9 +331,7 @@ export default function ProfilePage() {
                         <div className="pt-6 border-t border-slate-700">
                             <h4 className="text-red-400 font-semibold mb-3">Danger Zone</h4>
                             <button
-                                onClick={() => toast("Coming up soon... Account deletion will be available in the next update. Please contact support if you need assistance.", {
-                                    icon: "ℹ️",
-                                })}
+                                onClick={() => setIsDeleteModalOpen(true)}
                                 className="px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg transition-colors text-sm"
                             >
                                 🗑️ Delete Account
@@ -234,6 +342,123 @@ export default function ProfilePage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Password Change Modal */}
+                <Modal
+                    title="Change Password"
+                    open={isPasswordModalOpen}
+                    onCancel={() => {
+                        setIsPasswordModalOpen(false);
+                        setCurrentPassword("");
+                        setNewPassword("");
+                        setConfirmPassword("");
+                    }}
+                    footer={null}
+                    width="90%"
+                    style={{ maxWidth: 500 }}
+                >
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Current Password</label>
+                            <Input.Password
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Enter current password"
+                                size="large"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">New Password</label>
+                            <Input.Password
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password (min 6 characters)"
+                                size="large"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+                            <Input.Password
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm new password"
+                                size="large"
+                            />
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button
+                                onClick={handlePasswordChange}
+                                disabled={isChangingPassword}
+                                className="flex-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                            >
+                                {isChangingPassword ? "Changing..." : "Change Password"}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsPasswordModalOpen(false);
+                                    setCurrentPassword("");
+                                    setNewPassword("");
+                                    setConfirmPassword("");
+                                }}
+                                disabled={isChangingPassword}
+                                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:cursor-not-allowed text-slate-700 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                {/* Delete Account Modal */}
+                <Modal
+                    title={<span className="text-red-600">Delete Account</span>}
+                    open={isDeleteModalOpen}
+                    onCancel={() => {
+                        setIsDeleteModalOpen(false);
+                        setDeletePassword("");
+                    }}
+                    footer={null}
+                    width="90%"
+                    style={{ maxWidth: 500 }}
+                >
+                    <div className="space-y-4 py-4">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 font-semibold mb-2">⚠️ Warning: This action is permanent!</p>
+                            <p className="text-red-700 text-sm">
+                                Deleting your account will permanently remove all your data, including all logged rejections.
+                                This action cannot be undone.
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Enter your password to confirm</label>
+                            <Input.Password
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder="Enter your password"
+                                size="large"
+                            />
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={isDeletingAccount}
+                                className="flex-1 px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                            >
+                                {isDeletingAccount ? "Deleting..." : "Delete Account"}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsDeleteModalOpen(false);
+                                    setDeletePassword("");
+                                }}
+                                disabled={isDeletingAccount}
+                                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 disabled:bg-slate-100 disabled:cursor-not-allowed text-slate-700 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             </div>
         </DashboardLayout>
     );
