@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Button, Modal, Result, Spin, Input } from "antd";
-import { API_BASE_URL } from "@/api";
+import { Button, Modal, Result, Input } from "antd";
+import toast from "react-hot-toast";
+import { apiService, RejectionDetails as RejectionDetailsType } from "@/lib/api.service";
 
 enum RejectionCategory {
   JOB = "Job",
@@ -11,12 +12,7 @@ enum RejectionCategory {
   OTHER = "Other",
 }
 
-interface RejectionDetails {
-  title: string;
-  category: RejectionCategory | null;
-  content?: string;
-  reflections?: string;
-}
+type RejectionDetails = RejectionDetailsType;
 
 enum FormInputStep {
   CATEGORY = 1,
@@ -77,18 +73,22 @@ export default function Home() {
     if (!isSubmitActive) return;
 
     // Save rejectionDetails to local storage
-    addToLocalStorage(rejectionDetails);
+    apiService.saveRejectionLocally(rejectionDetails);
 
-    const isAuthenticated = goToDashboardIfAuthenticated();
+    const isAuthenticated = apiService.isAuthenticated();
     if (!isAuthenticated) {
       // Show modal to prompt sign in / sign up
       setIsModalOpen(true);
+    } else {
+      // Redirect to dashboard
+      window.location.href = "/app";
     }
   };
 
   const handleNavigationToDashboard = () => {
-    const isAuthenticated = goToDashboardIfAuthenticated();
-    if (!isAuthenticated) {
+    if (apiService.isAuthenticated()) {
+      window.location.href = "/app";
+    } else {
       setIsModalOpen(true);
     }
   }
@@ -252,9 +252,15 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="relative z-10 flex flex-col items-center justify-center p-4 mt-auto text-center text-xs sm:text-sm bg-slate-900 border-t border-slate-800 text-slate-500">
-        <p className="px-4">
+        <p className="px-4 mb-2">
           © 2025 rejections.mcpeblocker.uz - Made with ❤️ by{" "}
           <Link href="https://mcpeblocker.uz" className="underline hover:text-slate-300">Alisher Ortiqov</Link>
+        </p>
+        <p className="px-4">
+          Need help? Contact us at{" "}
+          <a href="mailto:mcpeblockeruzs@gmail.com" className="underline hover:text-slate-300">
+            mcpeblockeruzs@gmail.com
+          </a>
         </p>
       </footer>
     </div>
@@ -280,26 +286,17 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
+    setLoading(true);
+
     // Try login first
     try {
-      setLoading(true);
-      const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!loginResponse.ok) {
-        throw new Error("Login failed");
-      }
-      const data = await loginResponse.json();
-      const isSuccess = data.success;
-      if (isSuccess) {
+      const loginResponse = await apiService.login(email, password);
+      if (loginResponse.success && loginResponse.authToken) {
         // Successfully logged in
         onClose();
-        proceedToDashboard(data.authToken);
-        setLoading(false);
+        apiService.saveAuthToken(loginResponse.authToken);
+        await apiService.syncLocalRejections();
+        window.location.href = "/app";
         return;
       }
     } catch (error) {
@@ -308,21 +305,10 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
 
     // If login fails, try sign up
     try {
-      const signupResponse = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!signupResponse.ok) {
-        throw new Error("Signup failed");
-      }
-      const data = await signupResponse.json();
-      const isSuccess = data.success;
-      if (isSuccess) {
+      const signupResponse = await apiService.register(email, password);
+      if (signupResponse.success) {
         // Successfully signed up
-        alert("We are creating your account. Check your email for verification link!");
+        toast.success("We are creating your account. Check your email for verification link!");
         onClose();
         setLoading(false);
         return;
@@ -332,7 +318,7 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
     }
 
     // If both login and signup fail
-    alert("Please check your credentials and try again.");
+    toast.error("Please check your credentials and try again.");
     setLoading(false);
   };
 
@@ -381,58 +367,4 @@ function SuccessLogModal({ isOpen, onClose }: SuccessLogModalProps) {
   );
 }
 
-const goToDashboardIfAuthenticated = (): boolean => {
-  const authToken = localStorage.getItem("auth_token");
-  if (authToken) {
-    // Redirect to dashboard
-    proceedToDashboard(authToken);
-    return true;
-  }
-  return false;
-};
 
-const addToLocalStorage = (rejectionDetails: RejectionDetails) => {
-  const existingRejections = localStorage.getItem("rejection_experiences");
-  let rejectionsArray: RejectionDetails[] = [];
-  if (existingRejections) {
-    rejectionsArray = JSON.parse(existingRejections);
-  }
-  rejectionsArray.push(rejectionDetails);
-  localStorage.setItem("rejection_experiences", JSON.stringify(rejectionsArray));
-};
-
-const syncLocalRejections = async (authToken: string) => {
-  const existingRejections = localStorage.getItem("rejection_experiences");
-  if (!existingRejections) return;
-  const rejectionsArray: RejectionDetails[] = JSON.parse(existingRejections);
-
-  for (const rejection of rejectionsArray) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/rejections/log-from-website`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(rejection),
-      });
-      if (!response.ok) {
-        console.error("Failed to sync rejection:", rejection);
-      }
-    } catch (error) {
-      console.error("Error syncing rejection:", rejection, error);
-    }
-  }
-
-  // Clear local storage after syncing
-  localStorage.removeItem("rejection_experiences");
-}
-
-const proceedToDashboard = (authToken: string) => {
-  // Save the auth token to local storage
-  localStorage.setItem("auth_token", authToken);
-  // Sync local rejections
-  syncLocalRejections(authToken);
-  // Redirect to dashboard
-  window.location.href = "/app";
-};
