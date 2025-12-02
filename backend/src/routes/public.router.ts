@@ -52,6 +52,7 @@ router.get("/profile/:username", async (req, res) => {
                         emailId: true,
                         timestamp: true,
                         createdAt: true,
+                        content: true,
                     },
                     orderBy: {
                         createdAt: 'desc',
@@ -72,6 +73,8 @@ router.get("/profile/:username", async (req, res) => {
             id: r.id,
             title: r.title,
             source: r.emailId ? 'email' : 'manual',
+            // Preview of the rejection content
+            content: r.content ? (r.content.length > 100 ? r.content.substring(0, 100) + "..." : r.content) : "",
             timestamp: r.timestamp || r.createdAt,
         }));
 
