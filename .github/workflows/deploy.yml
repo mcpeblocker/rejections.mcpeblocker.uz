@@ -60,6 +60,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
+  
+            git pull origin master
             
             # Pull latest images
             docker pull ${{ secrets.DOCKER_USERNAME }}/rejection-backend:latest
