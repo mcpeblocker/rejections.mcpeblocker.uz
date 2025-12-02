@@ -110,28 +110,45 @@ export default function Home() {
   }, [rejectionDetails]);
 
   return (
-    <div className="bg-gradient-to-bl from-purple-500 via-pink-500 to-red-500 min-h-screen text-white flex flex-col">
+    <div className="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+      {/* Subtle background effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
+      </div>
+
       {/* Navigation bar */}
-      <nav className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4">
+      <nav className="relative z-10 flex flex-col sm:flex-row items-center justify-between p-4 gap-4 border-b border-slate-800">
         {/* Brand/Logo */}
-        <Link href="/" className="text-lg sm:text-xl font-bold">rejections.mcpeblocker.uz</Link>
+        <Link href="/" className="text-lg sm:text-xl font-bold text-white hover:text-blue-400 transition-colors">
+          rejections.mcpeblocker.uz
+        </Link>
         {/* CTA */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-          <Link href="https://github.com/mcpeblocker/rejections.mcpeblocker.uz" className="px-4 sm:px-6 py-2 sm:py-3 cursor-pointer hover:opacity-60 text-center text-sm sm:text-base" target="_blank" rel="noopener noreferrer">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto items-center">
+          <Link 
+            href="https://github.com/mcpeblocker/rejections.mcpeblocker.uz" 
+            className="px-4 sm:px-6 py-2 sm:py-3 text-slate-400 hover:text-white transition-colors text-center text-sm sm:text-base" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
             ↗ Contribute on Github
           </Link>
-          <Link href="#" className="px-4 sm:px-6 py-2 sm:py-3 cursor-pointer hover:opacity-60 text-center text-sm sm:text-base" onClick={handleNavigationToDashboard}>
+          <button 
+            className="px-4 sm:px-6 py-2 sm:py-3 cursor-pointer bg-blue-600 hover:bg-blue-700 transition-colors text-white rounded-md text-center text-sm sm:text-base font-semibold" 
+            onClick={handleNavigationToDashboard}
+          >
             Enter ➡️
-          </Link>
+          </button>
         </div>
       </nav>
+
       {/* Hero section */}
-      <header className="flex flex-col md:flex-row items-center justify-center text-center my-8 md:my-16 px-4">
+      <header className="relative z-10 flex flex-col md:flex-row items-center justify-center text-center my-16 md:my-24 px-4">
         <div className="md:mr-16 lg:mr-72 max-w-xl text-center md:text-left mb-8 md:mb-0">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-4 md:mb-8">
-            Turn Your <span className="text-yellow-300">Rejections</span> into <span className="text-green-300">Strength</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 md:mb-8 text-white">
+            Turn Your <span className="text-blue-400">Rejections</span> into <span className="text-blue-400">Strength</span>
           </h1>
-          <p className="text-base sm:text-lg md:text-xl">
+          <p className="text-base sm:text-lg md:text-xl text-slate-400">
             Join our community of resilient individuals who share their rejection stories to inspire and empower each other. Together, we transform setbacks into comebacks!
           </p>
         </div>
@@ -139,14 +156,15 @@ export default function Home() {
           🚫💔<span className="text-3xl sm:text-4xl md:text-5xl">➡️</span>💪🔥
         </div>
       </header>
+
       {/* CTA: Multi-step rejection experience log form */}
-      <main className="flex flex-col items-center justify-center px-4 pb-8">
-        <div className="bg-white/20 p-4 sm:p-6 md:p-8 rounded-lg w-full max-w-2xl backdrop-blur-md">
-          <h2 className="text-base sm:text-lg font-bold mb-4 sm:mb-6 md:mb-8 text-center text-green-300">
+      <main className="relative z-10 flex flex-col items-center justify-center px-4 pb-8">
+        <div className="bg-slate-800/50 border border-slate-700 p-4 sm:p-6 md:p-8 rounded-lg w-full max-w-2xl backdrop-blur-md">
+          <h2 className="text-base sm:text-lg font-bold mb-4 sm:mb-6 md:mb-8 text-center text-blue-400">
             Log Your Own Rejection Experience!
           </h2>
           {/* Current step label */}
-          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 text-center px-2">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold mb-4 text-center px-2 text-white">
             {stepLabels[currentStep]}
           </h3>
           {/* Form content based on current step */}
@@ -156,10 +174,10 @@ export default function Home() {
                 {Object.values(RejectionCategory).map((category) => (
                   <button
                     key={category}
-                    className={`p-3 sm:p-4 cursor-pointer rounded-lg border-2 text-sm sm:text-base ${
+                    className={`p-3 sm:p-4 cursor-pointer rounded-lg border-2 text-sm sm:text-base transition-colors ${
                       rejectionDetails.category === category 
-                        ? "border-yellow-300 bg-white/30" 
-                        : "border-transparent hover:bg-white/20"
+                        ? "border-blue-500 bg-blue-500/20 text-white" 
+                        : "border-slate-600 hover:bg-slate-700 text-slate-300"
                     }`}
                     onClick={() => handleCategorySelect(category)}
                   >
@@ -170,7 +188,7 @@ export default function Home() {
             )}
             {currentStep === FormInputStep.DETAILS && (
               <textarea
-                className="w-full p-3 sm:p-4 rounded-lg bg-white/20 border border-transparent focus:border-yellow-300 resize-none text-sm sm:text-base"
+                className="w-full p-3 sm:p-4 rounded-lg bg-slate-700 border border-slate-600 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 outline-none resize-none text-sm sm:text-base text-white placeholder-slate-400"
                 rows={6}
                 placeholder="Describe the rejection experience in detail..."
                 value={rejectionDetails.content}
@@ -179,7 +197,7 @@ export default function Home() {
             )}
             {currentStep === FormInputStep.REFLECTIONS && (
               <textarea
-                className="w-full p-3 sm:p-4 rounded-lg bg-white/20 border border-transparent focus:border-yellow-300 resize-none text-sm sm:text-base"
+                className="w-full p-3 sm:p-4 rounded-lg bg-slate-700 border border-slate-600 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 outline-none resize-none text-sm sm:text-base text-white placeholder-slate-400"
                 rows={6}
                 placeholder="Share your reflections on the rejection experience..."
                 value={rejectionDetails.reflections}
@@ -189,7 +207,7 @@ export default function Home() {
             {currentStep === FormInputStep.TITLE && (
               <input
                 type="text"
-                className="w-full p-3 sm:p-4 rounded-lg bg-white/20 border border-transparent focus:border-yellow-300 text-sm sm:text-base"
+                className="w-full p-3 sm:p-4 rounded-lg bg-slate-700 border border-slate-600 focus:border-blue-500 focus:ring-blue-500 focus:ring-1 outline-none text-sm sm:text-base text-white placeholder-slate-400"
                 placeholder="Give your rejection experience a title..."
                 value={rejectionDetails.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
@@ -231,11 +249,12 @@ export default function Home() {
         </div>
         <SuccessLogModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </main>
+
       {/* Footer */}
-      <footer className="flex flex-col items-center justify-center p-4 mt-auto text-center text-xs sm:text-sm bg-white/20 text-white-800">
+      <footer className="relative z-10 flex flex-col items-center justify-center p-4 mt-auto text-center text-xs sm:text-sm bg-slate-900 border-t border-slate-800 text-slate-500">
         <p className="px-4">
           © 2025 rejections.mcpeblocker.uz - Made with ❤️ by{" "}
-          <Link href="https://mcpeblocker.uz" className="underline">Alisher Ortiqov</Link>
+          <Link href="https://mcpeblocker.uz" className="underline hover:text-slate-300">Alisher Ortiqov</Link>
         </p>
       </footer>
     </div>
