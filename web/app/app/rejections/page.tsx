@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { apiService, Rejection, UserProfile } from "@/lib/api.service";
@@ -11,7 +11,7 @@ type SortOption = "newest" | "oldest" | "title";
 type FilterOption = "all" | "email" | "manual";
 type ViewMode = "list" | "wall";
 
-export default function AllRejectionsPage() {
+function RejectionsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [rejections, setRejections] = useState<Rejection[]>([]);
@@ -384,5 +384,19 @@ export default function AllRejectionsPage() {
                 )}
             </div>
         </DashboardLayout>
+    );
+}
+
+export default function AllRejectionsPage() {
+    return (
+        <Suspense fallback={
+            <DashboardLayout>
+                <div className="flex items-center justify-center py-20">
+                    <div className="text-slate-400 text-lg">Loading...</div>
+                </div>
+            </DashboardLayout>
+        }>
+            <RejectionsContent />
+        </Suspense>
     );
 }

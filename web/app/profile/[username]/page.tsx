@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { apiService } from "@/lib/api.service";
 import toast from "react-hot-toast";
@@ -8,7 +8,7 @@ import WallOfRejection from "@/components/WallOfRejection";
 
 type ViewMode = "profile" | "wall";
 
-export default function PublicProfilePage() {
+function PublicProfileContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -290,5 +290,17 @@ export default function PublicProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PublicProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-slate-300 text-xl">Loading...</div>
+      </div>
+    }>
+      <PublicProfileContent />
+    </Suspense>
   );
 }

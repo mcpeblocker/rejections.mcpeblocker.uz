@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, Suspense } from "react";
 import { apiService, UserProfile } from "@/lib/api.service";
 import QuickLogRejection from "./QuickLogRejection";
 
@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -162,5 +162,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }}
       />
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-slate-300 text-xl">Loading...</div>
+      </div>
+    }>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </Suspense>
   );
 }
