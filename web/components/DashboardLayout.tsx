@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, ReactNode } from "react";
 import { apiService, UserProfile } from "@/lib/api.service";
 import QuickLogRejection from "./QuickLogRejection";
@@ -12,9 +12,13 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Check if we're in wall view mode to hide the FAB
+  const isWallView = pathname === "/app/rejections" && searchParams.get("view") === "wall";
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -65,7 +69,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors cursor-pointer"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           {isSidebarOpen ? (
@@ -78,9 +82,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-slate-800/50 backdrop-blur-md border-r border-slate-700 transition-transform duration-300 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed top-0 left-0 z-40 h-screen w-64 bg-slate-800/50 backdrop-blur-md border-r border-slate-700 transition-transform duration-300 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
@@ -100,11 +103,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                       ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                       : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span className="font-medium">{item.label}</span>
@@ -126,7 +128,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <button
               onClick={handleSignOut}
-              className="w-full px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+              className="w-full px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition-colors cursor-pointer"
             >
               Sign Out
             </button>
@@ -149,14 +151,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </main>
 
-      {/* Quick Log Rejection FAB */}
-      <QuickLogRejection 
+      {/* Quick Log Rejection FAB - Hidden in wall view */}
+      <QuickLogRejection
+        btnHidden={isWallView}
         onSuccess={() => {
           // Force re-render of dashboard to show new rejection
           setRefreshKey(prev => prev + 1);
           // Optionally reload the page to show updated data
           router.refresh();
-        }} 
+        }}
       />
     </div>
   );

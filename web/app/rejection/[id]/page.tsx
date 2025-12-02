@@ -79,7 +79,7 @@ export default function PublicRejectionPage() {
         <div className="text-white text-2xl mb-4">Rejection not found</div>
         <button
           onClick={() => router.push("/")}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
         >
           Go to Home
         </button>
@@ -94,14 +94,14 @@ export default function PublicRejectionPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
           <button
             onClick={() => router.push("/")}
-            className="text-slate-400 hover:text-white transition-colors"
+            className="text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             ← Back
           </button>
           <div className="flex gap-3">
             <button
               onClick={copyRejectionLink}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -110,7 +110,7 @@ export default function PublicRejectionPage() {
             </button>
             <button
               onClick={shareRejection}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -226,7 +226,7 @@ export default function PublicRejectionPage() {
             </div>
             <button
               onClick={() => router.push(`/profile/${rejection.user.username}`)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-semibold"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-semibold cursor-pointer"
             >
               View Profile
             </button>
@@ -242,7 +242,7 @@ export default function PublicRejectionPage() {
             </p>
             <button
               onClick={() => router.push("/")}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold cursor-pointer"
             >
               Start Tracking
             </button>

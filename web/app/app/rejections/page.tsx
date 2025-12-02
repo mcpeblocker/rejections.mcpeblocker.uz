@@ -1,18 +1,28 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { apiService, Rejection } from "@/lib/api.service";
+import { apiService, Rejection, UserProfile } from "@/lib/api.service";
 import DashboardLayout from "@/components/DashboardLayout";
+import WallOfRejection from "@/components/WallOfRejection";
+import ShareLinkModal from "@/components/ShareLinkModal";
 
 type SortOption = "newest" | "oldest" | "title";
 type FilterOption = "all" | "email" | "manual";
+type ViewMode = "list" | "wall";
 
 export default function AllRejectionsPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [rejections, setRejections] = useState<Rejection[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState<SortOption>("newest");
     const [filterBy, setFilterBy] = useState<FilterOption>("all");
+    const [viewMode, setViewMode] = useState<ViewMode>("list");
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [copiedLink, setCopiedLink] = useState("");
+    const [user, setUser] = useState<UserProfile | null>(null);
 
     const fetchRejections = useCallback(async () => {
         try {
@@ -28,6 +38,25 @@ export default function AllRejectionsPage() {
 
     useEffect(() => {
         fetchRejections();
+        
+        // Fetch user data
+        const fetchUser = async () => {
+            try {
+                const response = await apiService.getMe();
+                if (response.success && response.user) {
+                    setUser(response.user);
+                }
+            } catch (error) {
+                console.error("Error fetching user:", error);
+            }
+        };
+        fetchUser();
+
+        // Check URL for view mode
+        const mode = searchParams.get("view");
+        if (mode === "wall") {
+            setViewMode("wall");
+        }
 
         // Listen for rejection logged event
         const handleRejectionLogged = () => {
@@ -39,7 +68,18 @@ export default function AllRejectionsPage() {
         return () => {
             window.removeEventListener('rejectionLogged', handleRejectionLogged);
         };
-    }, [fetchRejections]);
+    }, [fetchRejections, searchParams]);
+
+    const toggleViewMode = (mode: ViewMode) => {
+        setViewMode(mode);
+        const params = new URLSearchParams(searchParams.toString());
+        if (mode === "wall") {
+            params.set("view", "wall");
+        } else {
+            params.delete("view");
+        }
+        router.push(`/app/rejections?${params.toString()}`, { scroll: false });
+    };
 
     const filteredAndSortedRejections = useMemo(() => {
         let result = [...rejections];
@@ -98,17 +138,83 @@ export default function AllRejectionsPage() {
         return `${Math.floor(diffInDays / 365)} years ago`;
     };
 
+    // Wall view mode
+    if (viewMode === "wall" && !loading) {
+        return (
+            <DashboardLayout>
+                <div className="mb-6 flex items-center justify-between px-4">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                        Wall of Rejection 📌
+                    </h1>
+                    <div className="flex gap-3">
+                        {user?.username && (
+                            <button
+                                onClick={() => {
+                                    const url = `${window.location.origin}/profile/${user.username}?view=wall`;
+                                    navigator.clipboard.writeText(url);
+                                    setCopiedLink(url);
+                                    setShowLinkModal(true);
+                                }}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                <span className="hidden sm:inline">Share Wall</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={() => toggleViewMode("list")}
+                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                            <span className="hidden sm:inline">List View</span>
+                        </button>
+                    </div>
+                </div>
+                <WallOfRejection 
+                    rejections={filteredAndSortedRejections} 
+                    isAuthenticated={true}
+                    onAddRejection={() => {
+                        // Trigger the quick log rejection modal
+                        window.dispatchEvent(new Event('openQuickLogRejection'));
+                    }}
+                />
+                
+                {/* Share Link Modal */}
+                <ShareLinkModal
+                    isOpen={showLinkModal}
+                    onClose={() => setShowLinkModal(false)}
+                    link={copiedLink}
+                    title="Wall Link Copied Successfully!"
+                    description="Share your Wall of Rejection and inspire others to embrace failure as growth!"
+                />
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                        All Rejections 📋
-                    </h1>
-                    <p className="text-slate-400 text-sm sm:text-base">
-                        Your complete rejection journey in one place
-                    </p>
+                <div className="mb-8 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+                            All Rejections 📋
+                        </h1>
+                        <p className="text-slate-400 text-sm sm:text-base">
+                            Your complete rejection journey in one place
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => toggleViewMode("wall")}
+                        className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl cursor-pointer"
+                    >
+                        <span className="text-lg">📌</span>
+                        Wall View
+                    </button>
                 </div>
 
                 {loading ? (

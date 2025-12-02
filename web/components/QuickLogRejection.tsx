@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Input, Button } from "antd";
 import toast from "react-hot-toast";
 import { apiService } from "@/lib/api.service";
@@ -14,15 +14,29 @@ enum RejectionCategory {
 }
 
 interface QuickLogRejectionProps {
+  btnHidden?: boolean;
   onSuccess?: () => void;
 }
 
-export default function QuickLogRejection({ onSuccess }: QuickLogRejectionProps) {
+export default function QuickLogRejection({ btnHidden = false, onSuccess }: QuickLogRejectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState<RejectionCategory | null>(null);
   const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    // Listen for external open events
+    const handleOpenEvent = () => {
+      handleOpen();
+    };
+
+    window.addEventListener('openQuickLogRejection', handleOpenEvent);
+
+    return () => {
+      window.removeEventListener('openQuickLogRejection', handleOpenEvent);
+    };
+  }, []);
 
   const handleOpen = () => {
     setIsModalOpen(true);
@@ -53,13 +67,13 @@ export default function QuickLogRejection({ onSuccess }: QuickLogRejectionProps)
 
       // Success!
       handleClose();
-      
+
       // Show success message
       toast.success("🎉 Rejection logged successfully! You're one step closer to growth!");
-      
+
       // Trigger custom event for other components to refresh
       window.dispatchEvent(new Event('rejectionLogged'));
-      
+
       // Trigger refresh callback
       if (onSuccess) {
         onSuccess();
@@ -75,13 +89,15 @@ export default function QuickLogRejection({ onSuccess }: QuickLogRejectionProps)
   return (
     <>
       {/* Floating Action Button */}
-      <button
-        onClick={handleOpen}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-2xl group"
-        title="Quick Log Rejection"
-      >
-        <span className="group-hover:scale-110 transition-transform">➕</span>
-      </button>
+      {!btnHidden &&
+        <button
+          onClick={handleOpen}
+          className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-2xl group cursor-pointer"
+          title="Quick Log Rejection"
+        >
+          <span className="group-hover:scale-110 transition-transform">➕</span>
+        </button>
+      }
 
       {/* Modal */}
       <Modal
@@ -111,11 +127,10 @@ export default function QuickLogRejection({ onSuccess }: QuickLogRejectionProps)
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}
-                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      category === cat
+                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${category === cat
                         ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     {cat}
                   </button>

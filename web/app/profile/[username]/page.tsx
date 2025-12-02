@@ -1,20 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { apiService } from "@/lib/api.service";
 import toast from "react-hot-toast";
+import WallOfRejection from "@/components/WallOfRejection";
+
+type ViewMode = "profile" | "wall";
 
 export default function PublicProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const username = params.username as string;
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>("profile");
 
   useEffect(() => {
     if (!username) return;
+
+    // Check URL for view mode
+    const mode = searchParams.get("view");
+    if (mode === "wall") {
+      setViewMode("wall");
+    }
 
     async function fetchProfile() {
       try {
@@ -32,7 +43,18 @@ export default function PublicProfilePage() {
     }
 
     fetchProfile();
-  }, [username]);
+  }, [username, searchParams]);
+
+  const toggleViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode === "wall") {
+      params.set("view", "wall");
+    } else {
+      params.delete("view");
+    }
+    router.push(`/profile/${username}?${params.toString()}`, { scroll: false });
+  };
 
   const copyProfileLink = () => {
     const url = window.location.href;
@@ -69,11 +91,65 @@ export default function PublicProfilePage() {
         <div className="text-white text-2xl mb-4">Profile not found</div>
         <button
           onClick={() => router.push("/")}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer"
         >
           Go to Home
         </button>
       </div>
+    );
+  }
+
+  // Wall view mode
+  if (viewMode === "wall") {
+    return (
+      <>
+        <div className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-b border-slate-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push("/")}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ← Back
+              </button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                  {profile.name}'s Wall of Rejection
+                </h1>
+                <p className="text-slate-400 text-sm">
+                  {profile.stats.resilienceLevel} • {profile.stats.totalRejections} rejections
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => toggleViewMode("profile")}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="hidden sm:inline">Profile</span>
+              </button>
+              <button
+                onClick={shareProfile}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span className="hidden sm:inline">Share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="pt-24">
+          <WallOfRejection 
+            rejections={profile.recentRejections} 
+            isAuthenticated={false}
+          />
+        </div>
+      </>
     );
   }
 
@@ -108,11 +184,18 @@ export default function PublicProfilePage() {
               </div>
             </div>
 
-            {/* Share Buttons */}
-            <div className="flex gap-3">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => toggleViewMode("wall")}
+                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:shadow-xl cursor-pointer"
+              >
+                <span className="text-lg">📌</span>
+                <span className="font-semibold">Wall View</span>
+              </button>
               <button
                 onClick={copyProfileLink}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -121,7 +204,7 @@ export default function PublicProfilePage() {
               </button>
               <button
                 onClick={shareProfile}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />

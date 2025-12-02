@@ -5,6 +5,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { apiService, Rejection } from "@/lib/api.service";
 import DashboardLayout from "@/components/DashboardLayout";
+import ShareLinkModal from "@/components/ShareLinkModal";
 
 export default function RejectionDetailsPage() {
     const router = useRouter();
@@ -13,6 +14,8 @@ export default function RejectionDetailsPage() {
 
     const [rejection, setRejection] = useState<Rejection | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showLinkModal, setShowLinkModal] = useState(false);
+    const [copiedLink, setCopiedLink] = useState("");
 
     useEffect(() => {
         const fetchRejection = async () => {
@@ -88,9 +91,10 @@ export default function RejectionDetailsPage() {
                         onClick={() => {
                             const url = `${window.location.origin}/rejection/${rejection.id}`;
                             navigator.clipboard.writeText(url);
-                            toast.success("Rejection link copied! Share your journey 💪");
+                            setCopiedLink(url);
+                            setShowLinkModal(true);
                         }}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 cursor-pointer"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -222,19 +226,29 @@ export default function RejectionDetailsPage() {
                         onClick={() => toast("Coming up soon... Export feature will be available in the next update!", {
                             icon: "ℹ️",
                         })}
-                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors cursor-pointer"
                     >
                         📄 Export Details
                     </button>
                     <button
-                        onClick={() => toast("Coming up soon... Share feature will be available in the next update!", {
-                            icon: "ℹ️",
-                        })}
-                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                        onClick={() => {
+                            const url = `${window.location.origin}/rejection/${rejection.id}`;
+                            navigator.clipboard.writeText(url);
+                            setCopiedLink(url);
+                            setShowLinkModal(true);
+                        }}
+                        className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors cursor-pointer"
                     >
                         🔗 Share Story
                     </button>
                 </div>
+
+                {/* Share Link Modal */}
+                <ShareLinkModal
+                    isOpen={showLinkModal}
+                    onClose={() => setShowLinkModal(false)}
+                    link={copiedLink}
+                />
             </div>
         </DashboardLayout>
     );
