@@ -264,7 +264,7 @@ function PublicProfileContent() {
                       </div>
                     </div>
                     <div className="text-slate-400 text-sm">
-                      {new Date(rejection.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {new Date(rejection.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </div>
                   </div>
                 </div>
