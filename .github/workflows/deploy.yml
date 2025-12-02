@@ -69,15 +69,15 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/rejection-nginx:latest
             
             # Apply migrations
-            docker-compose run --rm backend npx prisma migrate deploy
+            docker compose run --rm backend npx prisma migrate deploy
             
             # Restart services
-            docker-compose down
-            docker-compose up -d
+            docker compose down
+            docker compose up -d
             
             sleep 15
             
-            if curl -f http://localhost:88/api/health > /dev/null 2>&1; then
+            if curl -f http://localhost:81/api/health > /dev/null 2>&1; then
               echo -e "\e[32m==> Health check passed! Deployment successful.\e[0m"
             else
               # Print in red color
