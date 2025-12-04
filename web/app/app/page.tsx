@@ -136,7 +136,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Profile Search */}
-                <div className="mb-8">
+                <div className="mb-8 relative z-10">
                     <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-lg p-6">
                         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                             🔍 Discover Other Users
@@ -158,7 +158,7 @@ export default function Dashboard() {
                             
                             {/* Search Results Dropdown */}
                             {showSearchResults && (
-                                <div className="absolute z-10 w-full mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                                <div className="absolute z-20 w-full mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-96 overflow-y-auto">
                                     {searchResults.length === 0 ? (
                                         <div className="p-4 text-center text-slate-400">
                                             {searchQuery.trim() ? "No users found" : "Start typing to search"}
