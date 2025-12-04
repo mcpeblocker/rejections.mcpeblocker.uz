@@ -338,6 +338,17 @@ class APIService {
     });
     return this.handleResponse<any>(response);
   }
+
+  /**
+   * Search for users by username or name (no auth required)
+   */
+  async searchUsers(query: string): Promise<any> {
+    const response = await fetch(`${this.baseURL}/public/search?q=${encodeURIComponent(query)}`, {
+      method: "GET",
+      headers: this.getHeaders(false),
+    });
+    return this.handleResponse<any>(response);
+  }
 }
 
 // Export singleton instance

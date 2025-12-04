@@ -180,4 +180,83 @@ router.get("/rejection/:id", async (req, res) => {
     }
 });
 
+/**
+ * GET /api/public/search?q=query
+ * Search for users by username or name
+ */
+router.get("/search", async (req, res) => {
+    const { q } = req.query;
+
+    try {
+        if (!q || typeof q !== 'string' || q.trim().length === 0) {
+            return res.json({ success: true, users: [] });
+        }
+
+        const searchQuery = q.trim().toLowerCase();
+
+        // Search users by username or name (case insensitive)
+        const users = await prisma.user.findMany({
+            where: {
+                AND: [
+                    {
+                        username: {
+                            not: null
+                        }
+                    },
+                    {
+                        OR: [
+                            {
+                                username: {
+                                    contains: searchQuery,
+                                    mode: 'insensitive'
+                                }
+                            },
+                            {
+                                name: {
+                                    contains: searchQuery,
+                                    mode: 'insensitive'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            select: {
+                id: true,
+                name: true,
+                username: true,
+                createdAt: true,
+                rejections: {
+                    select: { id: true }
+                }
+            },
+            take: 10, // Limit to 10 results
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // Format results with resilience info
+        const results = users.map(user => {
+            const rejectionCount = user.rejections.length;
+            const resilience = calculateResilienceLevel(rejectionCount);
+
+            return {
+                id: user.id,
+                name: user.name,
+                username: user.username,
+                totalRejections: rejectionCount,
+                resilienceLevel: resilience.level,
+                resilienceColor: resilience.color,
+                memberSince: user.createdAt,
+            };
+        });
+
+        res.json({ success: true, users: results });
+    } catch (error) {
+        console.error("Error searching users:", error);
+        res.status(500).json({ success: false, message: "Error searching users." });
+    }
+});
+
 export default router;

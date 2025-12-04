@@ -1,13 +1,28 @@
 "use client";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { apiService, Rejection } from "@/lib/api.service";
 import DashboardLayout from "@/components/DashboardLayout";
+
+interface SearchUser {
+    id: number;
+    name: string;
+    username: string;
+    totalRejections: number;
+    resilienceLevel: string;
+    resilienceColor: string;
+    memberSince: string;
+}
 
 export default function Dashboard() {
     const [count, setCount] = useState<number>(0);
     const [recentRejections, setRecentRejections] = useState<Rejection[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+    const [searching, setSearching] = useState(false);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
 
     const fetchData = useCallback(async () => {
         try {
@@ -45,6 +60,45 @@ export default function Dashboard() {
         };
     }, [fetchData]);
 
+    // Debounced search
+    useEffect(() => {
+        if (searchQuery.trim().length === 0) {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const response = await apiService.searchUsers(searchQuery);
+                if (response.success) {
+                    setSearchResults(response.users);
+                    setShowSearchResults(true);
+                }
+            } catch (error) {
+                console.error("Error searching users:", error);
+                setSearchResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
+
+    // Click outside to close search results
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowSearchResults(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString("en-US", {
@@ -79,6 +133,83 @@ export default function Dashboard() {
                     <p className="text-slate-400 text-sm sm:text-base">
                         Here's an overview of your rejection journey
                     </p>
+                </div>
+
+                {/* Profile Search */}
+                <div className="mb-8">
+                    <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-lg p-6">
+                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            🔍 Discover Other Users
+                        </h2>
+                        <div className="relative" ref={searchRef}>
+                            <input
+                                type="text"
+                                placeholder="Search by username or name..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => searchQuery && setShowSearchResults(true)}
+                                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                            {searching && (
+                                <div className="absolute right-3 top-3">
+                                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                            
+                            {/* Search Results Dropdown */}
+                            {showSearchResults && (
+                                <div className="absolute z-10 w-full mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-96 overflow-y-auto">
+                                    {searchResults.length === 0 ? (
+                                        <div className="p-4 text-center text-slate-400">
+                                            {searchQuery.trim() ? "No users found" : "Start typing to search"}
+                                        </div>
+                                    ) : (
+                                        <div className="p-2">
+                                            {searchResults.map((user) => (
+                                                <Link
+                                                    key={user.id}
+                                                    href={`/profile/${user.username}`}
+                                                    onClick={() => {
+                                                        setShowSearchResults(false);
+                                                        setSearchQuery("");
+                                                    }}
+                                                    className="block p-3 hover:bg-slate-700/50 rounded-lg transition-colors"
+                                                >
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                                                                {user.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-white font-medium truncate">{user.name}</p>
+                                                                <p className="text-sm text-slate-400 truncate">@{user.username}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                                            <div className="text-right">
+                                                                <p className="text-xs font-medium" style={{ color: user.resilienceColor }}>
+                                                                    {user.resilienceLevel}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    {user.totalRejections} rejections
+                                                                </p>
+                                                            </div>
+                                                            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Find and explore other users' rejection journeys
+                        </p>
+                    </div>
                 </div>
 
                 {loading ? (
