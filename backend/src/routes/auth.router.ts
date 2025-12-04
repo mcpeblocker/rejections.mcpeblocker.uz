@@ -156,7 +156,7 @@ router.post("/verify-email", async (req, res) => {
                 email: pendingUser.email,
                 password: pendingUser.password,
                 name,
-                username: typeof username === "string" ? username : null,
+                username: typeof username === "string" ? username.toLowerCase() : null,
             }
         });
         // Delete the pending user record

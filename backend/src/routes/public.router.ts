@@ -38,8 +38,14 @@ router.get("/profile/:username", async (req, res) => {
 
     try {
         // Find user by username
-        const user = await prisma.user.findUnique({
-            where: { username },
+        // Case insensitive search over username
+        const user = await prisma.user.findFirst({
+            where: {
+                username: {
+                    equals: username.toLowerCase(),
+                    mode: 'insensitive'
+                }
+            },
             select: {
                 id: true,
                 name: true,
